@@ -1,6 +1,6 @@
 {
   "name": "CV Studio",
-  "short_name": "CV_Gen",
+  "short_name": "C-v_Gen",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
