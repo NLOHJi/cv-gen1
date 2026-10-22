@@ -1,5 +1,6 @@
 // @ts-nocheck
 (() => {
+  const WORKER_URL = "https://cv-gen-ai.justinwc8.workers.dev/";
   const $ = id => document.getElementById(id);
   let portfolio = null;
 

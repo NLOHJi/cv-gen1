@@ -32,7 +32,7 @@ html, body {
 
 /* Update Banner */
 .update-banner {
-  display: none; /* Hidden by default */
+  display: none; 
   position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
   background: linear-gradient(90deg, #3b82f6, #8b5cf6);
   color: white; padding: 12px 20px;
