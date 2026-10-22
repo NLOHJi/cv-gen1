@@ -156,24 +156,66 @@
   });
 
   // ---------- AI AUTH UI ----------
-  $('use-ai').addEventListener('change', (e) => {
-    if (e.target.checked) {
-      $('ai-auth-box').style.display = 'block';
-      const savedPhone = localStorage.getItem('pro_phone'), savedPin = localStorage.getItem('pro_pin'), savedUuid = localStorage.getItem('pro_uuid');
-      if (savedPhone && savedPin && savedUuid) {
-        $('pro-phone').value = savedPhone; $('pro-phone').disabled = true;
-        $('pin-setup-group').style.display = 'none'; $('pin-verify-group').style.display = 'none';
-        $('auth-status').textContent = "✅ Pro AI is Active for " + savedPhone;
-      } else if (savedPhone) {
-        $('pro-phone').value = savedPhone; $('pro-phone').disabled = true;
-        $('pin-setup-group').style.display = 'none'; $('pin-verify-group').style.display = 'block';
-        $('auth-status').textContent = "⚠️ Please verify your identity to restore Pro AI.";
-      } else {
-        $('pin-setup-group').style.display = 'block'; $('pin-verify-group').style.display = 'none';
-        $('auth-status').textContent = "First time setup: Create a PIN. You will be charged once approved.";
-      }
-    } else { $('ai-auth-box').style.display = 'none'; }
-  });
+  if (useAI && (docType === 'cover_letter' || docType === 'application_letter')) {
+  btn.textContent = 'Connecting to Cloud AI...'; 
+  btn.disabled = true;
+  
+  const phone = localStorage.getItem('pro_phone');
+  if (!phone) {
+     alert("Please request Pro Access first.");
+     btn.textContent = originalText; 
+     btn.disabled = false;
+     return;
+  }
+  
+  const safePayload = { 
+    action: "generate",
+    phone: phone,
+    type: docType, 
+    jobTitle: jobTitle, 
+    company: company, 
+    degree: portfolio.education[0]?.degree || "my degree", 
+    skills: portfolio.skills.technical?.slice(0,3).join(", ") || "my skills",
+    jobAdText: jobAdText,
+    fileData: uploadedFileData, 
+    fileType: uploadedFileType
+  };
+  
+  try {
+    // ⚠️ MAKE SURE THIS URL IS YOUR ACTUAL CLOUDFLARE WORKER URL ⚠️
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(safePayload)
+    });
+    
+    // --- WE ADDED THIS ALERT TO SEE THE ERROR ---
+    const data = await response.json();
+    alert("Cloudflare says: " + JSON.stringify(data)); 
+    
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to generate");
+    }
+    
+    let aiTemplate = data.text;
+    
+    // Fill private placeholders locally
+    aiTemplate = aiTemplate.replace(/\[NAME\]/g, portfolio.personal.fullName).replace(/\[PHONE\]/g, portfolio.personal.phone).replace(/\[EMAIL\]/g, portfolio.personal.email);
+    html = buildLetterFromTemplate(aiTemplate);
+    
+  } catch (e) { 
+    alert('AI Fetch Error: ' + e.message); 
+    html = buildLetter(portfolio, docType === 'cover_letter' ? 'cover' : 'application', jobTitle, company); 
+  }
+  btn.textContent = originalText; 
+  btn.disabled = false;
+} else {
+  // OFFLINE GENERATION
+  if (docType === 'professional_cv') html = buildProfessionalCV(portfolio);
+  else if (docType === 'normal_cv') html = buildNormalCV(portfolio);
+  else if (docType === 'cover_letter') html = buildLetter(portfolio, 'cover', jobTitle, company);
+  else if (docType === 'application_letter') html = buildLetter(portfolio, 'application', jobTitle, company);
+}
 
   // ---------- GENERATION ----------
   $('btn-do-generate').addEventListener('click', async () => {

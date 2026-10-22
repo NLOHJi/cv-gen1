@@ -1,4 +1,4 @@
-const CACHE = 'cvgen-v2';
+const CACHE = 'cvgen-v3';
 const ASSETS = ['./', './index.html', './style.css', './script.js', './manifest.json'];
 
 self.addEventListener('install', e => {
